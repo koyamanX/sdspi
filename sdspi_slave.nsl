@@ -89,6 +89,6 @@ module sdspi_slave {
 				block_bit_pos++;
 			}
 		}
-		MISO = read_block_data[block_size-block_bit_pos];
+		MISO = read_block_data[block_bit_pos];
 	}
 }

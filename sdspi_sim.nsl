@@ -1,7 +1,12 @@
 #include "sdspi.nsl"
 #include "sdspi_slave.nsl"
 
-declare sdspi_sim simulation {}
+declare sdspi_sim simulation {
+	output adrs[32];
+	input block_data[4096];
+	func_in block_data_valid();
+	func_out read_block(adrs);
+}
 module sdspi_sim {
 	sdspi master;
 	sdspi_slave slave;
@@ -12,7 +17,13 @@ module sdspi_sim {
 		master.reset();
 		master.write(0x50, 0x0, 0x1);
 	}
-
+	func slave.read_block {
+		read_block(slave.adrs);
+	}
+	func block_data_valid {
+		slave.block_valid();
+		slave.block_data = block_data;
+	}
 	slave.SCLK = master.SCLK;
 	slave.MOSI = master.MOSI;
 	slave.CS = master.CS;
