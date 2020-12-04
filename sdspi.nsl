@@ -1,0 +1,418 @@
+#include "sdspi.h"
+
+/*
+	CRC : x^7 + x^3 + 1
+	CRC must be valid in MMC mode, and can be used in SPI mode.
+	We shall hardcode CRC in command token and never use in SPI mode.
+*/
+
+/* 
+	Command Token 
+	struct command_token_t {
+		command[8];	
+		arguments[32];
+		crc[8];
+	};
+	Master sends command in this format to the slave, slave returns response in the format(described later).
+	Each commands comprised of 1 byte command, 4 bytes argument and 1 byte CRC, 6 bytes in total.
+	Command can take argument on some command type.
+	CRC check are always done in MMC mode so must be valid.
+*/
+/* 
+	Command response 
+	There are some types of command responses(such as R1, R2, R3), and slave responds with one of types determined by commands master sends.
+	Command response always start with `0`.
+
+	* R1 Format. (1 byte)
+		also used as header of command responses R2, R3
+	struct response_1_t {
+		x[1];
+		in_idle_state[1];
+		erase_reset[1];
+		illegal_command[1];
+		communication_crc_error[1];
+		erase_sequence_error[1];
+		address_error[1];
+		parameter_error[1];
+	};
+
+	* R2 Format. (2 bytes)
+		Used as response of accessing status register.
+	struct response_2_t {
+		struct response_1_t R1;
+		value_of_status_register[8];
+	};
+
+	* R3 Format. (5 bytes)
+		Used as response of accessing OCR register.
+	struct response_2_t {
+		struct response_1_t R1;
+		OCR[32];
+	};
+	
+	* R7 Format. (5 bytes)
+	struct response_7_t {
+		struct response_1_t R1;
+		commnad_version[4];
+		reserved_bits[16];
+		voltage_accepted[4];
+		check_pattern[8];
+	}
+*/
+
+/* 
+	Data token
+*/
+
+/*
+	Data response
+*/
+
+/* 
+	Commands
+*/
+
+/* 
+	Initialization procedure(for SDHC compatible Card)
+	---
+	0. Supply power line below 0.5V for 1ms, wait until it become stable supply voltage.
+	1. Wait 1ms. (power supplyed with stable supply voltage)
+	2. Set clock to 100KHz
+	3. Send at least 74 clock with CS inactive
+	4. Send CMD0		; Goto idle state(CRC)
+	5. Send CMD8		; Check operating voltage(CRC, SDC v2)
+	6. Send ACMD41		; ACMDn -> CMD55 followed by CMDn
+		6.1 Send CMD55	; Application CMD(meaning next CMD is ACMDn)
+		6.2 Send ACMD41	; Start Initialization(SDC)
+	7. Send CMD58		; Read OCR
+	8. Send CMD16		; Set block length
+	9. Set clock to 25MHz
+*/
+
+
+#define CLK_100KHZ_COUNT 250
+#define TM_1MS_COUNT	50000
+#define DUMMY_CLOCK_COUNT 74
+#define SIZE_1_BYTE		8
+#define SIZE_5_BYTE		40
+
+module sdspi {
+	reg clk_cnt[8] = 0;
+	reg clk_100khz = 0;
+	reg clk_25mhz = 0;
+	reg clk_prev_100khz = 0;
+	reg clk_prev_25mhz = 0;
+	reg clk_prev_m_clock = 0;
+	wire clk_prev;
+	wire clk;
+	func_self falling_edge();
+	func_self rising_edge();
+	reg miso = 1;
+	reg inited = 0;
+	proc_name init();
+	proc_name idle();
+	reg cmd_buf[48];
+	reg response_size[6];
+	reg response_buf[40];
+	proc_name send_cmd(cmd_buf, response_size);
+	proc_name receive_response(response_buf, response_size);
+	reg data_block[4096] = -1;
+	reg debug_state[8] = 0;
+
+	clk = clk_100khz;
+	clk_prev = clk_prev_100khz;
+	if(((clk_cnt == CLK_100KHZ_COUNT)) && ~clk && ~~clk_prev) {
+		rising_edge();
+	}
+	if(((clk_cnt == CLK_100KHZ_COUNT)) && ~~clk && ~clk_prev) {
+		falling_edge();
+	}
+	/*
+	if(rising_edge) {
+		miso := MISO;
+	}
+	*/
+	if(clk_cnt == CLK_100KHZ_COUNT) {
+		clk_cnt := 0;
+		clk_100khz := ~clk_100khz;
+		clk_prev_100khz := clk_100khz;
+		miso := MISO;
+	} else {
+		clk_cnt++;
+	}
+
+	func reset {
+		inited := 0;
+		init();
+	}
+	proc init {
+		state_name poweron, dummy_clock, recv_cmd0_resp, recv_cmd8_resp, recv_acmd41_0_resp, recv_acmd41_1_resp, recv_cmd16_resp;
+
+		state poweron {
+			reg poweron_cnt[16] = 0;
+
+			if(poweron_cnt == TM_1MS_COUNT) {
+				if(rising_edge) {
+					poweron_cnt := 0;
+					debug_state := 1;
+					goto dummy_clock;
+				}
+			} else {
+				poweron_cnt++;
+			}
+			CS = HIGH;
+			SCLK = LOW;
+			MOSI = HIGH;
+		}
+		state dummy_clock {
+			reg dummy_clock_cnt[7] = 0;
+
+			if(rising_edge) {
+				if(dummy_clock_cnt == DUMMY_CLOCK_COUNT) {
+					dummy_clock_cnt := 0;
+					debug_state := 2;
+					send_cmd(CMD0, SIZE_1_BYTE);
+					goto recv_cmd0_resp;
+				} else {
+					dummy_clock_cnt++;
+				}
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+		}
+		state recv_cmd0_resp {
+			if(rising_edge) {
+				send_cmd(CMD8, SIZE_5_BYTE);
+				goto recv_cmd8_resp;
+				debug_state := 3;
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+		}
+		state recv_cmd8_resp {
+			if(rising_edge) {
+				debug_state := 4;
+				send_cmd(CMD55, SIZE_1_BYTE);
+				goto recv_acmd41_0_resp;
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+		}
+		state recv_acmd41_0_resp {
+			if(rising_edge) {
+				debug_state := 5;
+				if(response_buf[7:0] != 0x01) {
+					send_cmd(CMD55, SIZE_1_BYTE);
+					goto recv_acmd41_0_resp;
+				} else {
+					send_cmd(CMD41, SIZE_1_BYTE);
+					goto recv_acmd41_1_resp;
+				}
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+		}
+		state recv_acmd41_1_resp {
+			if(rising_edge) {
+				debug_state := 6;
+				if(response_buf[7:0] != 0x00) {
+					send_cmd(CMD55, SIZE_1_BYTE);
+					goto recv_acmd41_0_resp;
+				} else {
+					send_cmd(CMD16, SIZE_1_BYTE);
+					goto recv_cmd16_resp;
+				}
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+		}
+		state recv_cmd16_resp {
+			if(rising_edge) {
+				debug_state := 7;
+				goto poweron;
+				idle();
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+		}
+	}
+	proc send_cmd {
+		reg cmd_buf_bit_pos[7] = 48;
+
+		if(rising_edge) {
+			if((cmd_buf_bit_pos-1) == 0) {
+				cmd_buf_bit_pos := 48;
+				receive_response(0xffffffffff, response_size);
+			} else {
+				cmd_buf_bit_pos--;
+			}
+		}
+		/*
+		if(falling_edge) {
+			if((cmd_buf_bit_pos-1) != 0) {
+			}
+		}
+		*/
+		CS = LOW;
+		SCLK = clk;
+		MOSI = cmd_buf[cmd_buf_bit_pos-1];
+	}
+	proc receive_response {
+		reg response_buf_bit_pos[6] = 0;
+		state_name receive_start_bit, receive_response_body;
+		reg receive_response_state = 0;
+		
+		state receive_start_bit {
+			if(miso == LOW) {
+				if(rising_edge) {
+					response_buf := {response_buf[38:0], miso};
+					response_buf_bit_pos++;
+					receive_response_state++;
+					goto receive_response_body;
+				}
+			}
+		}
+		state receive_response_body {
+			if(rising_edge) {
+				if(response_buf_bit_pos == (response_size-1)) {
+					response_buf_bit_pos := 0;
+					if(!inited) {
+						init();
+					} else {
+						idle();
+					}
+					receive_response_state++;
+					goto receive_start_bit;
+				} else {
+					response_buf_bit_pos++;
+				}
+				response_buf := {response_buf[38:0], miso};
+			}
+		}
+		CS = LOW;
+		SCLK = clk;
+		MOSI = HIGH;
+	}
+	proc idle {
+		state_name s0, s1, recv_cmd17_resp, recv_data_packet_start_byte, recv_data_packet_data_block, recv_data_packet_crc, dummy;
+		reg read_op = 0;
+		reg start_byte[8] = 0;
+		reg data_block_size[13] = 4096;
+		reg crc[16] = 0;
+		reg crc_size[5] = 16;
+
+		inited := HIGH;
+
+		state s0 {
+			reg s0_cnt[8] = 0;
+			/* change 100khz to 25MHz, sync to rising_edge then wait some clock to stablaize */
+			if(rising_edge) {
+				if(s0_cnt == 0xff) {
+					s0_cnt := 0;
+					goto s1;
+				} else {
+					s0_cnt++;
+				}
+			}
+			CS = HIGH;
+			SCLK = LOW;
+			MOSI = HIGH;
+			debug_state := 8;
+		}
+		state s1 {
+			if(read && ~read_op) {
+				read_op := HIGH;
+			}
+			if(read_op) {
+				if(rising_edge) {
+					read_op := LOW;
+					send_cmd(CMD17, SIZE_1_BYTE);
+					goto recv_cmd17_resp;
+				}
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 9;
+		}
+		state recv_cmd17_resp {
+			if(rising_edge) {
+				if(response_buf[7:0] == 0x00) {
+					goto recv_data_packet_start_byte;
+				}
+				/* TODO: if failed */
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 10;
+		}
+		state recv_data_packet_start_byte {
+			if(rising_edge) {
+				if({start_byte[6:0], miso} == 0xfe) {
+					start_byte := 0;
+					goto recv_data_packet_data_block;
+				} else {
+					start_byte := {start_byte[6:0], miso};
+				}
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 11;
+		}
+		state recv_data_packet_data_block {
+			reg data_block_bit_pos[13] = 0;
+
+			if(rising_edge) {
+				if(data_block_bit_pos == (data_block_size-1)) {
+					valid({data_block[4094:0], miso});
+					data_block_bit_pos := 0;
+					goto recv_data_packet_crc;
+				} else {
+					data_block_bit_pos++;
+				}
+				data_block := {data_block[4094:0], miso};
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 12;
+		}
+		state recv_data_packet_crc {
+			reg crc_bit_pos[4] = 0;
+
+			if(rising_edge) {
+				if(crc_bit_pos == (crc_size-1)) {
+					crc_bit_pos := 0;
+					goto dummy;
+				} else {
+					crc_bit_pos++;
+				}
+				crc := {crc[14:0], miso};
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 13;
+		}
+		state dummy {
+			if(rising_edge) {
+				goto s1;
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 14;
+		}
+	}
+	debug_inited = inited;
+	debug_out = response_buf;
+	debug_status = debug_state;
+}
