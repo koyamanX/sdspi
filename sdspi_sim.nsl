@@ -1,0 +1,21 @@
+#include "sdspi.nsl"
+#include "sdspi_slave.nsl"
+
+declare sdspi_sim simulation {}
+module sdspi_sim {
+	sdspi master;
+	sdspi_slave slave;
+	reg r = 0;
+
+	if(~r) {
+		r := ~r;
+		master.reset();
+		master.write(0x50, 0x0, 0x1);
+	}
+
+	slave.SCLK = master.SCLK;
+	slave.MOSI = master.MOSI;
+	slave.CS = master.CS;
+	master.MISO = slave.MISO;
+}
+

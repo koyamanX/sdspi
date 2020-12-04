@@ -1,0 +1,94 @@
+#include "sdspi_slave.h"
+
+#define CMD0 	0x40_00_00_00_00_95
+#define CMD8 	0x48_00_00_01_aa_87
+#define CMD55	0x77_00_00_00_00_01
+#define ACMD41	0x69_40_ff_80_00_01
+#define CMD41	ACMD41
+#define CMD58	0x7a_00_00_00_00_ff
+/* 512 byte */
+#define CMD16	0x50_00_00_02_00_01
+#define CMD17	0x51_00_00_00_00_01
+
+module sdspi_slave {
+	state_name s0, s1, s2, s3, s4;
+	reg cmd_buf[48] = -1;
+	reg cmd_buf_bit_pos[6] = 0;
+	func_self rising_edge;
+	reg clk_prev = 0;
+	reg mosi = 1;
+	reg response_buf[40] = 0;
+	reg response_buf_bit_pos[8] = 0;
+	reg response_size[8] = 0;
+	reg read_op = 0;
+	reg block_bit_pos[16] = 0;
+	reg block_size[16] = 4096;
+	reg read_block_data[4096] = 0;
+
+	clk_prev := SCLK;
+	
+	if(~clk_prev && SCLK) {
+		rising_edge();
+		mosi := MOSI;
+	}
+	state s0 {
+		if((CS == LOW) && rising_edge) {
+			goto s1;
+		}
+		MISO = HIGH;
+	}
+	state s1 {
+		if(rising_edge) {
+			if(cmd_buf_bit_pos == 48-1) {
+				cmd_buf_bit_pos := 0;
+				goto s2;
+			} else {
+				cmd_buf_bit_pos++;
+			}
+			cmd_buf := {cmd_buf[46:0], mosi};
+		}
+		MISO = HIGH;
+	}
+	state s2 {
+		if(rising_edge) {
+			any {
+				cmd_buf == CMD0:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
+				cmd_buf == CMD8:	{response_buf := 0x000000000; response_size := 40-1; goto s3;}
+				cmd_buf == CMD55:	{response_buf := 0x000000001; response_size := 8-1; goto s3;}
+				cmd_buf == CMD41:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
+				cmd_buf == CMD16:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
+				(cmd_buf&0xff0000000001) == CMD17:	{response_buf := 0x00000000fe; response_size := 16-1; read_op := 1; block_bit_pos := 0; read_block(cmd_buf[39:8]); block_size := 4096-1; goto s3;}
+			}
+		}
+		MISO = HIGH;
+	}
+	func block_valid {
+		read_block_data := block_data;
+	}
+	state s3 {
+		if(rising_edge) {
+			if(response_buf_bit_pos == response_size) {
+				response_buf_bit_pos := 0;
+				if(read_op) {
+					goto s4;
+				} else {
+					goto s0;
+				}
+			} else {
+				response_buf_bit_pos++;
+			}
+		}
+		MISO = response_buf[response_size-response_buf_bit_pos];
+	}
+	state s4 {
+		if(rising_edge) {
+			if(block_bit_pos == 4096-1) {
+				block_bit_pos := 0;
+				goto s0;
+			} else {
+				block_bit_pos++;
+			}
+		}
+		MISO = read_block_data[block_size-block_bit_pos];
+	}
+}
