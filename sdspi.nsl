@@ -347,6 +347,7 @@ module sdspi {
 		state recv_cmd17_resp {
 			if(rising_edge) {
 				if(response_buf[7:0] == 0x00) {
+					start_byte := {start_byte[6:0], miso};
 					goto recv_data_packet_start_byte;
 				} else {
 					status.error := HIGH;
