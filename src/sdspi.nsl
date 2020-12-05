@@ -121,6 +121,7 @@ module sdspi {
 	proc_name send_cmd(cmd_buf, response_size);
 	proc_name receive_response(response_buf, response_size);
 	reg data_block[4096] = -1;
+	reg write_data_block[4096] = -1;
 	reg debug_state[8] = 0;
 	reg debug_x[8] = 0;
 
@@ -315,7 +316,9 @@ module sdspi {
 		MOSI = HIGH;
 	}
 	proc idle {
-		state_name s0, s1, recv_cmd17_resp, recv_data_packet_start_byte, recv_data_packet_data_block, recv_data_packet_crc, dummy;
+		state_name s0, s1, dummy;
+		state_name recv_cmd17_resp, recv_data_packet_start_byte, recv_data_packet_data_block, recv_data_packet_crc;
+		state_name recv_cmd24_resp, send_data_packet_start_byte, send_data_packet_data_block, send_data_packet_crc, recv_data_resp;
 		reg start_byte_buf[8] = 0;
 		reg start_byte[8] = 0xfe;
 		reg crc[16] = 0;
@@ -343,6 +346,12 @@ module sdspi {
 				if(rising_edge) {
 					send_cmd((CMD17|{0x00, operation_adrs, 0x00}), SIZE_1_BYTE);
 					goto recv_cmd17_resp;
+				}
+				status.idle := LOW;
+			} else if(operation.write) {
+				if(rising_edge) {
+					send_cmd((CMD24|{0x00, operation_adrs, 0x00}), SIZE_1_BYTE);
+					goto recv_cmd24_resp;
 				}
 				status.idle := LOW;
 			} else {
@@ -427,6 +436,90 @@ module sdspi {
 			MOSI = HIGH;
 			debug_state := 14;
 			debug_x := 0x80;
+		}
+		state recv_cmd24_resp {
+			if(rising_edge) {
+				if(response_buf[7:0] == 0x00) {
+					goto send_data_packet_start_byte;
+				} else {
+					status.error := HIGH;
+					goto s1;
+				}
+			}
+			CS = HIGH;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 15;
+		}
+		state send_data_packet_start_byte {
+			reg start_byte_send_bit_pos[3] = 7;
+
+			if(rising_edge) {
+				if(start_byte_send_bit_pos == 0) {
+					start_byte_send_bit_pos := 7;
+					goto send_data_packet_data_block;
+				} else {
+					start_byte_send_bit_pos--;
+				}
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = start_byte[start_byte_send_bit_pos];
+			debug_state := 16;
+		}
+		state send_data_packet_data_block {
+			reg write_data_block_bit_pos[12] = 4095;
+			
+			if(rising_edge) {
+				if(write_data_block_bit_pos == 0) {
+					write_data_block_bit_pos := 4095;
+					goto send_data_packet_crc;
+				} else {
+					write_data_block_bit_pos--;
+				}
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = write_data_block[write_data_block_bit_pos];
+			debug_state := 17;
+		}
+		state send_data_packet_crc {
+			reg crc_send_bit_pos[4] = 15;
+			
+			if(rising_edge) {
+				if(crc_send_bit_pos == 0) {
+					crc_send_bit_pos := 15;
+					goto recv_data_resp;
+				} else {
+					crc_send_bit_pos--;
+				}
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = 1'b0;
+			debug_state := 18;
+		}
+		state recv_data_resp {
+			reg data_resp_bit_pos[3] = 7;
+			reg data_resp[8] = -1;
+
+			if(rising_edge) {
+				if(data_resp_bit_pos == 0) {
+					if(data_resp != 0x00) {
+						status.error := HIGH;
+					}
+					data_resp_bit_pos := 7;
+					goto s1;
+				} else {
+					data_resp_bit_pos--;
+				}
+				data_resp := {data_resp[6:0], miso};	
+			}
+			CS = LOW;
+			SCLK = clk;
+			MOSI = HIGH;
+			debug_state := 19;
+			operation.write := LOW;
 		}
 	}
 	func read {

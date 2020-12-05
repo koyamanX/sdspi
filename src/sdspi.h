@@ -58,7 +58,8 @@ struct status_t {
 	inited[1];
 };
 struct operation_t {
-	x[31];
+	x[30];
+	write[1];
 	read[1];
 };
 
@@ -71,5 +72,6 @@ struct operation_t {
 /* 512 byte */
 #define CMD16	0x50_00_00_02_00_01
 #define CMD17	0x51_00_00_00_00_01
+#define CMD24	0x58_00_00_00_00_01
 #endif
 
