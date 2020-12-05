@@ -84,6 +84,7 @@ module sdspi_slave {
 		if(rising_edge) {
 			if(block_bit_pos == 0) {
 				block_bit_pos := 4096-1;
+				read_op := 0;
 				goto s0;
 			} else {
 				block_bit_pos--;
