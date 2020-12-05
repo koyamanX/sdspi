@@ -17,12 +17,12 @@ module sdspi_sim {
 		master.reset();
 		master.write(0x210, 0x0, 0x1);
 	}
-	func slave.read_block {
+	func slave.read {
 		read_block(slave.adrs);
 	}
 	func block_data_valid {
-		slave.block_valid();
-		slave.block_data = block_data;
+		slave.block_data_valid();
+		slave.read_block_data = block_data;
 	}
 	slave.SCLK = master.SCLK;
 	slave.MOSI = master.MOSI;

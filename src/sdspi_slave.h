@@ -11,8 +11,8 @@ declare sdspi_slave {
 	output MISO;
 	input SCLK;
 	output adrs[32];
-	input block_data[4096];
-	func_in block_valid();
-	func_out read_block(adrs);
+	input read_block_data[4096];
+	func_in block_data_valid();
+	func_out read(adrs);
 }
 #endif

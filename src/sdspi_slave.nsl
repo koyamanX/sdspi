@@ -23,7 +23,7 @@ module sdspi_slave {
 	reg read_op = 0;
 	reg block_bit_pos[16] = 0;
 	reg block_size[16] = 4096;
-	reg read_block_data[4096] = 0;
+	reg block_data[4096] = 0;
 
 	clk_prev := SCLK;
 	
@@ -57,13 +57,13 @@ module sdspi_slave {
 				cmd_buf == CMD55:	{response_buf := 0x000000001; response_size := 8-1; goto s3;}
 				cmd_buf == CMD41:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
 				cmd_buf == CMD16:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
-				(cmd_buf&0xff0000000001) == CMD17:	{response_buf := 0x00000000fe; response_size := 16-1; read_op := 1; block_bit_pos := 4096-1; read_block(cmd_buf[39:8]); block_size := 4096-1; goto s3;}
+				(cmd_buf&0xff0000000001) == CMD17:	{response_buf := 0x00000000fe; response_size := 16-1; read_op := 1; block_bit_pos := 4096-1; read(cmd_buf[39:8]); block_size := 4096-1; goto s3;}
 			}
 		}
 		MISO = HIGH;
 	}
-	func block_valid {
-		read_block_data := block_data;
+	func block_data_valid {
+		block_data := read_block_data;
 	}
 	state s3 {
 		if(rising_edge) {
@@ -90,6 +90,6 @@ module sdspi_slave {
 				block_bit_pos--;
 			}
 		}
-		MISO = read_block_data[block_bit_pos];
+		MISO = block_data[block_bit_pos];
 	}
 }
