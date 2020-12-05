@@ -54,8 +54,6 @@ int main(int argc, char **argv) {
 		}
 		cnt++;
 	}
-	for(int i = 0; i < 512; i++)
-		printf("%x:%x\n", i, buf[i]);
 	tfp->close();
 	sdspi_sim_env->final();
 	fclose(fp);
