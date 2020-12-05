@@ -18,8 +18,8 @@ declare sdspi {
 	output SCLK;
 
 	func_in reset();
-	input read_adrs[10];
-	input write_adrs[10];
+	input read_adrs[12];
+	input write_adrs[12];
 	input byteen[3];
 	output rdata[32];
 	input wdata[32];
