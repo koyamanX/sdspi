@@ -605,5 +605,5 @@ module sdspi {
 	}
 	debug_status = debug_state | debug_x;
 	debug_inited = status.inited;
-	debug_sign = data_block[16:0];
+	debug_sign = data_block[15:0];
 }
