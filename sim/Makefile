@@ -1,5 +1,5 @@
 NSL2VL=nsl2vl
-NFLAGS=-O2 -neg_res 
+NFLAGS=-O2 -neg_res -I../src
 IVERILOG=iverilog
 
 sdspi_sim: sdspi_sim.cpp obj_dir sdspi_sim.v

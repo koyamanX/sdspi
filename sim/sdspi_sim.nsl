@@ -1,5 +1,5 @@
-#include "sdspi.nsl"
-#include "sdspi_slave.nsl"
+#include "../src/sdspi.nsl"
+#include "../src/sdspi_slave.nsl"
 
 declare sdspi_sim simulation {
 	output adrs[32];
