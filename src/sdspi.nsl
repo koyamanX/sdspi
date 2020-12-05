@@ -316,7 +316,8 @@ module sdspi {
 	}
 	proc idle {
 		state_name s0, s1, recv_cmd17_resp, recv_data_packet_start_byte, recv_data_packet_data_block, recv_data_packet_crc, dummy;
-		reg start_byte[8] = 0;
+		reg start_byte_buf[8] = 0;
+		reg start_byte[8] = 0xfe;
 		reg crc[16] = 0;
 
 		status.inited := HIGH;
@@ -355,7 +356,7 @@ module sdspi {
 		state recv_cmd17_resp {
 			if(rising_edge) {
 				if(response_buf[7:0] == 0x00) {
-					start_byte := {start_byte[6:0], miso};
+					start_byte_buf := {start_byte_buf[6:0], miso};
 					goto recv_data_packet_start_byte;
 				} else {
 					status.error := HIGH;
@@ -369,11 +370,11 @@ module sdspi {
 		}
 		state recv_data_packet_start_byte {
 			if(rising_edge) {
-				if({start_byte[6:0], miso} == 0xfe) {
-					start_byte := 0;
+				if({start_byte_buf[6:0], miso} == start_byte) {
+					start_byte_buf := 0;
 					goto recv_data_packet_data_block;
 				} else {
-					start_byte := {start_byte[6:0], miso};
+					start_byte_buf := {start_byte_buf[6:0], miso};
 				}
 			}
 			CS = LOW;
