@@ -111,7 +111,8 @@ module sdspi {
 	wire clk;
 	func_self falling_edge();
 	func_self rising_edge();
-	reg miso = 1;
+	reg miso_r = 1;
+	wire miso;
 	proc_name init();
 	proc_name idle();
 	reg cmd_buf[48];
@@ -131,6 +132,7 @@ module sdspi {
 
 	clk = if(status.inited) clk_25mhz else clk_100khz;
 	clk_prev = if(status.inited) clk_prev_25mhz else clk_prev_100khz;
+	miso = if(status.inited) MISO else miso_r;
 	if(((((clk_cnt == CLK_100KHZ_COUNT)) && ~clk && ~~clk_prev) && ~status.inited) || (clk && ~clk_prev && status.inited)) {
 		rising_edge();
 	}
@@ -139,13 +141,13 @@ module sdspi {
 	}
 	/*
 	if(rising_edge) {
-		miso := MISO;
+		miso_r := MISO;
 	}
 	*/
 	if((clk_cnt == CLK_100KHZ_COUNT) && ~status.inited) {
-		miso := MISO;
+		miso_r := MISO;
 	} else if(status.inited) {
-		miso := MISO;
+		miso_r := MISO;
 	}
 	if(clk_cnt == CLK_100KHZ_COUNT) {
 		clk_cnt := 0;
