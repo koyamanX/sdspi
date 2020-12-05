@@ -432,28 +432,156 @@ module sdspi {
 		response_lower = response_buf[31:0];
 		response_upper = {0x000000, response_buf[39:32]};
 		any {
-			read_adrs == 10'(0x0): {read_data = data_block[31:0]; valid();}
-			read_adrs == 10'(0x4): {read_data = data_block[63:32]; valid();}
-			read_adrs == 10'(0x8): {read_data = data_block[95:64]; valid();}
-			read_adrs == 10'(0xc): {read_data = data_block[127:96]; valid();}
-			read_adrs == 10'(0x10): {read_data = data_block[159:128]; valid();}
-			read_adrs == 10'(0x14): {read_data = data_block[191:160]; valid();}
-			read_adrs == 10'(0x18): {read_data = data_block[223:192]; valid();}
-			read_adrs == 10'(0x1c): {read_data = data_block[255:224]; valid();}
-			read_adrs == 10'(0x20): {read_data = data_block[287:256]; valid();}
-			read_adrs == 10'(0x24): {read_data = data_block[319:288]; valid();}
-			read_adrs == 10'(0x28): {read_data = data_block[351:320]; valid();}
-			read_adrs == 10'(0x2c): {read_data = data_block[383:352]; valid();}
-			read_adrs == 10'(0x30): {read_data = data_block[415:384]; valid();}
-			read_adrs == 10'(0x34): {read_data = data_block[447:416]; valid();}
-			read_adrs == 10'(0x38): {read_data = data_block[479:448]; valid();}
-			read_adrs == 10'(0x3c): {read_data = data_block[511:480]; valid();}
-			read_adrs == 10'(0x40): {read_data = 32'(status); valid();}
-			read_adrs == 10'(0x44): {read_data = response_lower; valid();}
-			read_adrs == 10'(0x48): {read_data = response_upper; valid();}
-			read_adrs == 10'(0x4c): {read_data = status; valid();}
-			read_adrs == 10'(0x50): {read_data = operation; valid();}
-			read_adrs == 10'(0x54): {read_data = operation_adrs; valid();}
+			adrs == 10'(0x0): {read_data = data_block[31:0]; valid();}
+			adrs == 10'(0x4): {read_data = data_block[63:32]; valid();}
+			adrs == 10'(0x8): {read_data = data_block[95:64]; valid();}
+			adrs == 10'(0xc): {read_data = data_block[127:96]; valid();}
+			adrs == 10'(0x10): {read_data = data_block[159:128]; valid();}
+			adrs == 10'(0x14): {read_data = data_block[191:160]; valid();}
+			adrs == 10'(0x18): {read_data = data_block[223:192]; valid();}
+			adrs == 10'(0x1c): {read_data = data_block[255:224]; valid();}
+			adrs == 10'(0x20): {read_data = data_block[287:256]; valid();}
+			adrs == 10'(0x24): {read_data = data_block[319:288]; valid();}
+			adrs == 10'(0x28): {read_data = data_block[351:320]; valid();}
+			adrs == 10'(0x2c): {read_data = data_block[383:352]; valid();}
+			adrs == 10'(0x30): {read_data = data_block[415:384]; valid();}
+			adrs == 10'(0x34): {read_data = data_block[447:416]; valid();}
+			adrs == 10'(0x38): {read_data = data_block[479:448]; valid();}
+			adrs == 10'(0x3c): {read_data = data_block[511:480]; valid();}
+			adrs == 10'(0x40): {read_data = data_block[543:512]; valid();}
+			adrs == 10'(0x44): {read_data = data_block[575:544]; valid();}
+			adrs == 10'(0x48): {read_data = data_block[607:576]; valid();}
+			adrs == 10'(0x4c): {read_data = data_block[639:608]; valid();}
+			adrs == 10'(0x50): {read_data = data_block[671:640]; valid();}
+			adrs == 10'(0x54): {read_data = data_block[703:672]; valid();}
+			adrs == 10'(0x58): {read_data = data_block[735:704]; valid();}
+			adrs == 10'(0x5c): {read_data = data_block[767:736]; valid();}
+			adrs == 10'(0x60): {read_data = data_block[799:768]; valid();}
+			adrs == 10'(0x64): {read_data = data_block[831:800]; valid();}
+			adrs == 10'(0x68): {read_data = data_block[863:832]; valid();}
+			adrs == 10'(0x6c): {read_data = data_block[895:864]; valid();}
+			adrs == 10'(0x70): {read_data = data_block[927:896]; valid();}
+			adrs == 10'(0x74): {read_data = data_block[959:928]; valid();}
+			adrs == 10'(0x78): {read_data = data_block[991:960]; valid();}
+			adrs == 10'(0x7c): {read_data = data_block[1023:992]; valid();}
+			adrs == 10'(0x80): {read_data = data_block[1055:1024]; valid();}
+			adrs == 10'(0x84): {read_data = data_block[1087:1056]; valid();}
+			adrs == 10'(0x88): {read_data = data_block[1119:1088]; valid();}
+			adrs == 10'(0x8c): {read_data = data_block[1151:1120]; valid();}
+			adrs == 10'(0x90): {read_data = data_block[1183:1152]; valid();}
+			adrs == 10'(0x94): {read_data = data_block[1215:1184]; valid();}
+			adrs == 10'(0x98): {read_data = data_block[1247:1216]; valid();}
+			adrs == 10'(0x9c): {read_data = data_block[1279:1248]; valid();}
+			adrs == 10'(0xa0): {read_data = data_block[1311:1280]; valid();}
+			adrs == 10'(0xa4): {read_data = data_block[1343:1312]; valid();}
+			adrs == 10'(0xa8): {read_data = data_block[1375:1344]; valid();}
+			adrs == 10'(0xac): {read_data = data_block[1407:1376]; valid();}
+			adrs == 10'(0xb0): {read_data = data_block[1439:1408]; valid();}
+			adrs == 10'(0xb4): {read_data = data_block[1471:1440]; valid();}
+			adrs == 10'(0xb8): {read_data = data_block[1503:1472]; valid();}
+			adrs == 10'(0xbc): {read_data = data_block[1535:1504]; valid();}
+			adrs == 10'(0xc0): {read_data = data_block[1567:1536]; valid();}
+			adrs == 10'(0xc4): {read_data = data_block[1599:1568]; valid();}
+			adrs == 10'(0xc8): {read_data = data_block[1631:1600]; valid();}
+			adrs == 10'(0xcc): {read_data = data_block[1663:1632]; valid();}
+			adrs == 10'(0xd0): {read_data = data_block[1695:1664]; valid();}
+			adrs == 10'(0xd4): {read_data = data_block[1727:1696]; valid();}
+			adrs == 10'(0xd8): {read_data = data_block[1759:1728]; valid();}
+			adrs == 10'(0xdc): {read_data = data_block[1791:1760]; valid();}
+			adrs == 10'(0xe0): {read_data = data_block[1823:1792]; valid();}
+			adrs == 10'(0xe4): {read_data = data_block[1855:1824]; valid();}
+			adrs == 10'(0xe8): {read_data = data_block[1887:1856]; valid();}
+			adrs == 10'(0xec): {read_data = data_block[1919:1888]; valid();}
+			adrs == 10'(0xf0): {read_data = data_block[1951:1920]; valid();}
+			adrs == 10'(0xf4): {read_data = data_block[1983:1952]; valid();}
+			adrs == 10'(0xf8): {read_data = data_block[2015:1984]; valid();}
+			adrs == 10'(0xfc): {read_data = data_block[2047:2016]; valid();}
+			adrs == 10'(0x100): {read_data = data_block[2079:2048]; valid();}
+			adrs == 10'(0x104): {read_data = data_block[2111:2080]; valid();}
+			adrs == 10'(0x108): {read_data = data_block[2143:2112]; valid();}
+			adrs == 10'(0x10c): {read_data = data_block[2175:2144]; valid();}
+			adrs == 10'(0x110): {read_data = data_block[2207:2176]; valid();}
+			adrs == 10'(0x114): {read_data = data_block[2239:2208]; valid();}
+			adrs == 10'(0x118): {read_data = data_block[2271:2240]; valid();}
+			adrs == 10'(0x11c): {read_data = data_block[2303:2272]; valid();}
+			adrs == 10'(0x120): {read_data = data_block[2335:2304]; valid();}
+			adrs == 10'(0x124): {read_data = data_block[2367:2336]; valid();}
+			adrs == 10'(0x128): {read_data = data_block[2399:2368]; valid();}
+			adrs == 10'(0x12c): {read_data = data_block[2431:2400]; valid();}
+			adrs == 10'(0x130): {read_data = data_block[2463:2432]; valid();}
+			adrs == 10'(0x134): {read_data = data_block[2495:2464]; valid();}
+			adrs == 10'(0x138): {read_data = data_block[2527:2496]; valid();}
+			adrs == 10'(0x13c): {read_data = data_block[2559:2528]; valid();}
+			adrs == 10'(0x140): {read_data = data_block[2591:2560]; valid();}
+			adrs == 10'(0x144): {read_data = data_block[2623:2592]; valid();}
+			adrs == 10'(0x148): {read_data = data_block[2655:2624]; valid();}
+			adrs == 10'(0x14c): {read_data = data_block[2687:2656]; valid();}
+			adrs == 10'(0x150): {read_data = data_block[2719:2688]; valid();}
+			adrs == 10'(0x154): {read_data = data_block[2751:2720]; valid();}
+			adrs == 10'(0x158): {read_data = data_block[2783:2752]; valid();}
+			adrs == 10'(0x15c): {read_data = data_block[2815:2784]; valid();}
+			adrs == 10'(0x160): {read_data = data_block[2847:2816]; valid();}
+			adrs == 10'(0x164): {read_data = data_block[2879:2848]; valid();}
+			adrs == 10'(0x168): {read_data = data_block[2911:2880]; valid();}
+			adrs == 10'(0x16c): {read_data = data_block[2943:2912]; valid();}
+			adrs == 10'(0x170): {read_data = data_block[2975:2944]; valid();}
+			adrs == 10'(0x174): {read_data = data_block[3007:2976]; valid();}
+			adrs == 10'(0x178): {read_data = data_block[3039:3008]; valid();}
+			adrs == 10'(0x17c): {read_data = data_block[3071:3040]; valid();}
+			adrs == 10'(0x180): {read_data = data_block[3103:3072]; valid();}
+			adrs == 10'(0x184): {read_data = data_block[3135:3104]; valid();}
+			adrs == 10'(0x188): {read_data = data_block[3167:3136]; valid();}
+			adrs == 10'(0x18c): {read_data = data_block[3199:3168]; valid();}
+			adrs == 10'(0x190): {read_data = data_block[3231:3200]; valid();}
+			adrs == 10'(0x194): {read_data = data_block[3263:3232]; valid();}
+			adrs == 10'(0x198): {read_data = data_block[3295:3264]; valid();}
+			adrs == 10'(0x19c): {read_data = data_block[3327:3296]; valid();}
+			adrs == 10'(0x1a0): {read_data = data_block[3359:3328]; valid();}
+			adrs == 10'(0x1a4): {read_data = data_block[3391:3360]; valid();}
+			adrs == 10'(0x1a8): {read_data = data_block[3423:3392]; valid();}
+			adrs == 10'(0x1ac): {read_data = data_block[3455:3424]; valid();}
+			adrs == 10'(0x1b0): {read_data = data_block[3487:3456]; valid();}
+			adrs == 10'(0x1b4): {read_data = data_block[3519:3488]; valid();}
+			adrs == 10'(0x1b8): {read_data = data_block[3551:3520]; valid();}
+			adrs == 10'(0x1bc): {read_data = data_block[3583:3552]; valid();}
+			adrs == 10'(0x1c0): {read_data = data_block[3615:3584]; valid();}
+			adrs == 10'(0x1c4): {read_data = data_block[3647:3616]; valid();}
+			adrs == 10'(0x1c8): {read_data = data_block[3679:3648]; valid();}
+			adrs == 10'(0x1cc): {read_data = data_block[3711:3680]; valid();}
+			adrs == 10'(0x1d0): {read_data = data_block[3743:3712]; valid();}
+			adrs == 10'(0x1d4): {read_data = data_block[3775:3744]; valid();}
+			adrs == 10'(0x1d8): {read_data = data_block[3807:3776]; valid();}
+			adrs == 10'(0x1dc): {read_data = data_block[3839:3808]; valid();}
+			adrs == 10'(0x1e0): {read_data = data_block[3871:3840]; valid();}
+			adrs == 10'(0x1e4): {read_data = data_block[3903:3872]; valid();}
+			adrs == 10'(0x1e8): {read_data = data_block[3935:3904]; valid();}
+			adrs == 10'(0x1ec): {read_data = data_block[3967:3936]; valid();}
+			adrs == 10'(0x1f0): {read_data = data_block[3999:3968]; valid();}
+			adrs == 10'(0x1f4): {read_data = data_block[4031:4000]; valid();}
+			adrs == 10'(0x1f8): {read_data = data_block[4063:4032]; valid();}
+			adrs == 10'(0x1fc): {read_data = data_block[4095:4064]; valid();}
+			read_adrs == 10'(0x200): {read_data = data_block[31:0]; valid();}
+			read_adrs == 10'(0x204): {read_data = data_block[63:32]; valid();}
+			read_adrs == 10'(0x208): {read_data = data_block[95:64]; valid();}
+			read_adrs == 10'(0x20c): {read_data = data_block[127:96]; valid();}
+			read_adrs == 10'(0x210): {read_data = data_block[159:128]; valid();}
+			read_adrs == 10'(0x214): {read_data = data_block[191:160]; valid();}
+			read_adrs == 10'(0x218): {read_data = data_block[223:192]; valid();}
+			read_adrs == 10'(0x21c): {read_data = data_block[255:224]; valid();}
+			read_adrs == 10'(0x220): {read_data = data_block[287:256]; valid();}
+			read_adrs == 10'(0x224): {read_data = data_block[319:288]; valid();}
+			read_adrs == 10'(0x228): {read_data = data_block[351:320]; valid();}
+			read_adrs == 10'(0x22c): {read_data = data_block[383:352]; valid();}
+			read_adrs == 10'(0x230): {read_data = data_block[415:384]; valid();}
+			read_adrs == 10'(0x234): {read_data = data_block[447:416]; valid();}
+			read_adrs == 10'(0x238): {read_data = data_block[479:448]; valid();}
+			read_adrs == 10'(0x23c): {read_data = data_block[511:480]; valid();}
+			read_adrs == 10'(0x240): {read_data = 32'(status); valid();}
+			read_adrs == 10'(0x244): {read_data = response_lower; valid();}
+			read_adrs == 10'(0x248): {read_data = response_upper; valid();}
+			read_adrs == 10'(0x24c): {read_data = status; valid();}
+			read_adrs == 10'(0x250): {read_data = operation; valid();}
+			read_adrs == 10'(0x254): {read_data = operation_adrs; valid();}
 			else: load_access_fault();
 		}
 		any {
@@ -471,10 +599,10 @@ module sdspi {
 		wire old_data[32];
 
 		any {
-			write_adrs == 10'(0x40): {old_data = status; status.error := wdata[3]; valid();}
-			write_adrs == 10'(0x50): {old_data = operation; operation := wdata; valid();}
-			//write_adrs == 10'(0x54): {old_data = operation_adrs; operation_adrs := new_data; valid();}
-			write_adrs == 10'(0x54): {old_data = operation_adrs; operation_adrs := wdata; valid();}
+			write_adrs == 10'(0x240): {old_data = status; status.error := wdata[3]; valid();}
+			write_adrs == 10'(0x250): {old_data = operation; operation := wdata; valid();}
+			//write_adrs == 10'(0x254): {old_data = operation_adrs; operation_adrs := new_data; valid();}
+			write_adrs == 10'(0x254): {old_data = operation_adrs; operation_adrs := wdata; valid();}
 			else: store_amo_access_fault();
 		}
 		/*
