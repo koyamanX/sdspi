@@ -129,12 +129,12 @@ module sdspi {
 	reg operation_adrs[32] = 0;
 	status_t reg status = 0;
 
-	clk = clk_100khz;
-	clk_prev = clk_prev_100khz;
-	if(((clk_cnt == CLK_100KHZ_COUNT)) && ~clk && ~~clk_prev) {
+	clk = if(status.inited) clk_25mhz else clk_100khz;
+	clk_prev = if(status.inited) clk_prev_25mhz else clk_prev_100khz;
+	if(((((clk_cnt == CLK_100KHZ_COUNT)) && ~clk && ~~clk_prev) && ~status.inited) || (clk && ~clk_prev && status.inited)) {
 		rising_edge();
 	}
-	if(((clk_cnt == CLK_100KHZ_COUNT)) && ~~clk && ~clk_prev) {
+	if(((((clk_cnt == CLK_100KHZ_COUNT)) && ~~clk && ~clk_prev) && ~status.inited) || (~clk && clk_prev && status.inited)) {
 		falling_edge();
 	}
 	/*
@@ -142,14 +142,20 @@ module sdspi {
 		miso := MISO;
 	}
 	*/
+	if((clk_cnt == CLK_100KHZ_COUNT) && ~status.inited) {
+		miso := MISO;
+	} else if(status.inited) {
+		miso := MISO;
+	}
 	if(clk_cnt == CLK_100KHZ_COUNT) {
 		clk_cnt := 0;
 		clk_100khz := ~clk_100khz;
 		clk_prev_100khz := clk_100khz;
-		miso := MISO;
 	} else {
 		clk_cnt++;
 	}
+	clk_25mhz := ~clk_25mhz;
+	clk_prev_25mhz := clk_25mhz;
 
 	func reset {
 		status.inited := 0;
@@ -315,7 +321,7 @@ module sdspi {
 
 		state s0 {
 			reg s0_cnt[8] = 0;
-			/* change 100khz to 25MHz, sync to rising_edge then wait some clock to stablaize */
+			/* change 100khz to 25MHz, sync to rising_edge */
 			if(rising_edge) {
 				if(s0_cnt == 0xff) {
 					s0_cnt := 0;

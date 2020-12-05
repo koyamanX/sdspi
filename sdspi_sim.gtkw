@@ -1,0 +1,47 @@
+[*]
+[*] GTKWave Analyzer v3.3.105 (w)1999-2020 BSI
+[*] Sat Dec  5 10:18:07 2020
+[*]
+[dumpfile_mtime] "Sat Dec  5 10:15:57 2020"
+[dumpfile_size] 209417681
+[timestart] 450000
+[size] 1528 836
+[pos] -51 -51
+*-15.000000 517167 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.sdspi_sim.
+[sst_width] 233
+[signals_width] 298
+[sst_expanded] 1
+[sst_vpaned_height] 353
+@28
+TOP.sdspi_sim._master_CS
+TOP.sdspi_sim._master_SCLK
+TOP.sdspi_sim.master.clk_25mhz
+TOP.sdspi_sim.master.clk_100khz
+TOP.sdspi_sim._master_MISO
+TOP.sdspi_sim._master_MOSI
+TOP.sdspi_sim._master_debug_inited
+@22
+TOP.sdspi_sim.master.cmd_buf[47:0]
+TOP.sdspi_sim.master.response_buf[39:0]
+TOP.sdspi_sim.master.data_block[4095:0]
+TOP.sdspi_sim.master.data_block_bit_pos[12:0]
+@28
+TOP.sdspi_sim._slave_CS
+TOP.sdspi_sim._slave_SCLK
+TOP.sdspi_sim._slave_MISO
+TOP.sdspi_sim._slave_MOSI
+TOP.sdspi_sim._slave_read_block
+@22
+TOP.sdspi_sim._slave_adrs[31:0]
+TOP.sdspi_sim._slave_block_data[4095:0]
+@23
+TOP.sdspi_sim.slave.block_bit_pos[15:0]
+@28
+TOP.sdspi_sim._slave_block_valid
+@22
+TOP.sdspi_sim.slave.cmd_buf[47:0]
+TOP.sdspi_sim.slave.response_buf[39:0]
+[pattern_trace] 1
+[pattern_trace] 0
