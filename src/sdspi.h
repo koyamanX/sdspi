@@ -30,9 +30,11 @@ declare sdspi {
 	func_out store_amo_access_fault();
 	func_out interrupt_req;
 
+#ifdef DEBUG
 	output debug_status[8];
 	output debug_inited;
 	output debug_sign[16];
+#endif
 }
 
 struct command_token_t {

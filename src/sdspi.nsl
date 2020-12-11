@@ -122,8 +122,10 @@ module sdspi {
 	proc_name receive_response(response_buf, response_size);
 	reg read_data_block[4096] = -1;
 	reg write_data_block[4096] = -1;
+#ifdef DEBUG
 	reg debug_state[8] = 0;
 	reg debug_x[8] = 0;
+#endif
 
 	wire response_upper[32];
 	wire response_lower[32];
@@ -173,7 +175,9 @@ module sdspi {
 			if(poweron_cnt == TM_1MS_COUNT) {
 				if(rising_edge) {
 					poweron_cnt := 0;
+#ifdef DEBUG
 					debug_state := 1;
+#endif
 					goto dummy_clock;
 				}
 			} else {
@@ -189,7 +193,9 @@ module sdspi {
 			if(rising_edge) {
 				if(dummy_clock_cnt == DUMMY_CLOCK_COUNT) {
 					dummy_clock_cnt := 0;
+#ifdef DEBUG
 					debug_state := 2;
+#endif
 					send_cmd(CMD0, SIZE_1_BYTE);
 					goto recv_cmd0_resp;
 				} else {
@@ -204,7 +210,9 @@ module sdspi {
 			if(rising_edge) {
 				send_cmd(CMD8, SIZE_5_BYTE);
 				goto recv_cmd8_resp;
+#ifdef DEBUG
 				debug_state := 3;
+#endif
 			}
 			CS = HIGH;
 			SCLK = clk;
@@ -212,7 +220,9 @@ module sdspi {
 		}
 		state recv_cmd8_resp {
 			if(rising_edge) {
+#ifdef DEBUG
 				debug_state := 4;
+#endif
 				send_cmd(CMD55, SIZE_1_BYTE);
 				goto recv_acmd41_0_resp;
 			}
@@ -222,7 +232,9 @@ module sdspi {
 		}
 		state recv_acmd41_0_resp {
 			if(rising_edge) {
+#ifdef DEBUG
 				debug_state := 5;
+#endif
 				if(response_buf[7:0] != 0x01) {
 					send_cmd(CMD55, SIZE_1_BYTE);
 					goto recv_acmd41_0_resp;
@@ -237,7 +249,9 @@ module sdspi {
 		}
 		state recv_acmd41_1_resp {
 			if(rising_edge) {
+#ifdef DEBUG
 				debug_state := 6;
+#endif
 				if(response_buf[7:0] != 0x00) {
 					send_cmd(CMD55, SIZE_1_BYTE);
 					goto recv_acmd41_0_resp;
@@ -252,7 +266,9 @@ module sdspi {
 		}
 		state recv_cmd16_resp {
 			if(rising_edge) {
+#ifdef DEBUG
 				debug_state := 7;
+#endif
 				goto poweron;
 				idle();
 			}
@@ -339,7 +355,9 @@ module sdspi {
 			CS = HIGH;
 			SCLK = LOW;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 8;
+#endif
 		}
 		state s1 {
 			if(operation.read) {
@@ -360,7 +378,9 @@ module sdspi {
 			CS = HIGH;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 9;
+#endif
 		}
 		state recv_cmd17_resp {
 			if(rising_edge) {
@@ -375,7 +395,9 @@ module sdspi {
 			CS = HIGH;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 10;
+#endif
 		}
 		state recv_data_packet_start_byte {
 			if(rising_edge) {
@@ -389,7 +411,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 11;
+#endif
 		}
 		state recv_data_packet_data_block {
 			reg data_block_bit_pos[13] = 0;
@@ -408,7 +432,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 12;
+#endif
 		}
 		state recv_data_packet_crc {
 			reg crc_bit_pos[4] = 0;
@@ -425,7 +451,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 13;
+#endif
 		}
 		state dummy {
 			if(rising_edge) {
@@ -434,8 +462,10 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 14;
 			debug_x := 0x80;
+#endif
 		}
 		state recv_cmd24_resp {
 			if(rising_edge) {
@@ -449,7 +479,9 @@ module sdspi {
 			CS = HIGH;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 15;
+#endif
 		}
 		state send_data_packet_start_byte {
 			reg start_byte_send_bit_pos[3] = 7;
@@ -465,7 +497,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = start_byte[start_byte_send_bit_pos];
+#ifdef DEBUG
 			debug_state := 16;
+#endif
 		}
 		state send_data_packet_data_block {
 			reg write_data_block_bit_pos[12] = 4095;
@@ -481,7 +515,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = write_data_block[write_data_block_bit_pos];
+#ifdef DEBUG
 			debug_state := 17;
+#endif
 		}
 		state send_data_packet_crc {
 			reg crc_send_bit_pos[4] = 15;
@@ -497,7 +533,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = 1'b0;
+#ifdef DEBUG
 			debug_state := 18;
+#endif
 		}
 		state recv_data_resp {
 			reg data_resp_bit_pos[3] = 7;
@@ -518,7 +556,9 @@ module sdspi {
 			CS = LOW;
 			SCLK = clk;
 			MOSI = HIGH;
+#ifdef DEBUG
 			debug_state := 19;
+#endif
 			operation.write := LOW;
 		}
 	}
@@ -697,7 +737,9 @@ module sdspi {
 		}
 		*/
 	}
+#ifdef DEBUG
 	debug_status = debug_state | debug_x;
 	debug_inited = status.inited;
 	debug_sign = read_data_block[15:0];
+#endif
 }
