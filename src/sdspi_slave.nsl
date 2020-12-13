@@ -58,6 +58,7 @@ module sdspi_slave {
 				cmd_buf == CMD41:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
 				cmd_buf == CMD16:	{response_buf := 0x000000000; response_size := 8-1; goto s3;}
 				(cmd_buf&0xff0000000001) == CMD17:	{response_buf := 0x00000000fe; response_size := 16-1; read_op := 1; block_bit_pos := 4096-1; read(cmd_buf[39:8]); block_size := 4096-1; goto s3;}
+				else: goto s0;
 			}
 		}
 		MISO = HIGH;
